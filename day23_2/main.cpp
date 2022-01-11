@@ -80,10 +80,11 @@ public:
         this->print("\nCups ",cups);   
     }
     Part2CrabCups& operator+=(int const MOVES) {
-        int progress_count{0};
+        const int PROGRESS_STEP{100000};
+        int progress_count{PROGRESS_STEP};
         Id event_horizon{MAX};
         for (int i = 0; i<MOVES; ++i) {
-            if (progress_count++%10000==0) std::cout << "\n" << cups.size() << " " << MOVES-i;
+            if (progress_count++%PROGRESS_STEP==0) std::cout << "\n" << cups.size() << " " << MOVES-i;
             // print();
             /*
             1) The crab picks up the three cups that are immediately clockwise of the current cup. They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
@@ -106,7 +107,7 @@ public:
                     next = MAX;
             }
             // Expand cups with next if it is not yet in there
-            auto selected=cups.end();
+            auto selected=cups.begin();
             if (next>9 and next==event_horizon) {
                 cups.push_back(next);
                 --event_horizon;
@@ -123,8 +124,8 @@ public:
             /*
             4) The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
             */
-            auto begin_plus_one = cups.begin();++begin_plus_one;
-            std::rotate(cups.begin(), begin_plus_one,cups.end());
+            cups.push_back(cups.front());
+            cups.pop_front();
         }
         return *this;
     }
