@@ -84,7 +84,7 @@ public:
         Id event_horizon{MAX};
         for (int i = 0; i<MOVES; ++i) {
             if (progress_count++%10000==0) std::cout << "\n" << cups.size() << " " << MOVES-i;
-            print();
+            // print();
             /*
             1) The crab picks up the three cups that are immediately clockwise of the current cup. They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
             */
@@ -94,8 +94,8 @@ public:
             
             Cups picked{picked_range.first,picked_range.second};
             cups.erase(picked_range.first,picked_range.second);
-            print("\nPicked ",picked);
-            print("\nRemaining ",cups);
+            // print("\nPicked ",picked);
+            // print("\nRemaining ",cups);
             /*
             2) The crab selects a destination cup: the cup with a label equal to the current cup's label minus one. If this would select one of the cups that was just picked up, the crab will keep subtracting one until it finds a cup that wasn't just picked up. If at any point in this process the value goes below the lowest value on any cup's label, it wraps around to the highest value on any cup's label instead.
             */
@@ -114,12 +114,12 @@ public:
             }
             else selected = std::find(cups.begin(),cups.end(),next);
 
-            std::cout << "\nSelected : " << *selected << std::flush;
+            // std::cout << "\nSelected : " << *selected << std::flush;
             /*
             3) The crab places the cups it just picked up so that they are immediately clockwise of the destination cup. They keep the same order as when they were picked up.
             */
             cups.insert(++selected,picked.begin(),picked.end());
-            print("\npicked reinserted ",cups);
+            // print("\npicked reinserted ",cups);
             /*
             4) The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
             */
@@ -144,11 +144,11 @@ private:
 int main(int argc, const char * argv[]) {
     // Part2CrabCups<9> crabs{pExample2}; // Part 1 example
     // crabs+=10;
-    Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
-    crabs+=100;
+    // Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
+    // crabs+=100;
     // Part2CrabCups<100> crabs{pPuzzleInput}; // Investigate
-    // Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
-    // crabs += 10000000;
+    Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
+    crabs += 10000000;
     auto cups = crabs.cups_from_1();
     crabs.print();
     auto second = cups.begin();std::advance(second,1);
