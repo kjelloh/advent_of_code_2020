@@ -99,8 +99,8 @@ public:
         */
         // splice: unlink from cups the range begin+1..begin+4, and link them into picked before picked.end()
         picked.splice(picked.end(),cups,advanced(cups.begin(),1),advanced(cups.begin(),4));
-        print("\nPicked ",picked);
-        print("\nRemaining ",cups);       
+        // print("\nPicked ",picked);
+        // print("\nRemaining ",cups);       
     }
     void select_next() {
         /*
@@ -113,14 +113,14 @@ public:
                 next = MAX;
         }
         this->selected = std::find(cups.begin(),cups.end(),next);
-        std::cout << "\nSelected : " << *selected << std::flush;
+        // std::cout << "\nSelected : " << *selected << std::flush;
     }
     void place_picked() {
         /*
         3) The crab places the cups it just picked up so that they are immediately clockwise of the destination cup. They keep the same order as when they were picked up.
         */
         cups.splice(advanced(selected,1),picked,picked.begin(),picked.end());
-        print("\npicked reinserted ",cups);
+        // print("\npicked reinserted ",cups);
     }
     void make_next_current() {
         /*
@@ -135,11 +135,10 @@ public:
         cups.splice(cups.end(),cups,cups.begin());
     }
     Part2CrabCups& operator+=(int const MOVES) {
-        const int PROGRESS_STEP{100000};
+        const int PROGRESS_STEP{100};
         int progress_count{PROGRESS_STEP};
         for (int i = 0; i<MOVES; ++i) {
-            if (progress_count++%PROGRESS_STEP==0) std::cout << "\n" << cups.size() << " " << MOVES-i;
-            print();
+            if (progress_count++%PROGRESS_STEP==0) std::cout << "\n" << MOVES-i << std::flush;
             this->pick_cups();
             this->select_next();
             this->place_picked();
@@ -166,11 +165,11 @@ private:
 int main(int argc, const char * argv[]) {
     // Part2CrabCups<9> crabs{pExample2}; // Part 1 example
     // crabs+=10;
-    Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
-    crabs+=100;
+    // Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
+    // crabs+=100;
     // Part2CrabCups<100> crabs{pPuzzleInput}; // Investigate
-    // Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
-    // crabs += 10000000;
+    Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
+    crabs += 10000000;
     auto cups = crabs.cups_from_1();
     crabs.print();
     auto second = cups.begin();std::advance(second,1);
