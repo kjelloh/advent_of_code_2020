@@ -23,15 +23,19 @@ class Part1CrabCups {
 public:
     std::string sCups {};
     Part1CrabCups& operator+=(int const MOVES) {
+        const int PROGRESS_STEP{100000};
+        int progress_count{PROGRESS_STEP};
+        std::cout << "\n";
         for (int i = 0; i<MOVES; ++i) {
-            std::cout << "\nCups : " << sCups;
+            if (progress_count++%PROGRESS_STEP==0) std::cout << '.' << std::flush;
+            // std::cout << "\nCups : " << sCups;
             /*
             1) The crab picks up the three cups that are immediately clockwise of the current cup. They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
             */
             std::string sPicked = sCups.substr(1,3);
             sCups.erase(1,3);
-            std::cout << "\npicked : " << sPicked;
-            std::cout << "\nRemaining cups : " << sCups;
+            // std::cout << "\npicked : " << sPicked;
+            // std::cout << "\nRemaining cups : " << sCups;
             /*
             2) The crab selects a destination cup: the cup with a label equal to the current cup's label minus one. If this would select one of the cups that was just picked up, the crab will keep subtracting one until it finds a cup that wasn't just picked up. If at any point in this process the value goes below the lowest value on any cup's label, it wraps around to the highest value on any cup's label instead.
             */
@@ -42,17 +46,17 @@ public:
                 if (next <= '0') next = '9';
                 pos =  sCups.find(next);
             } while (pos == std::string::npos);
-            std::cout << "\nSelected : " << sCups.substr(pos,1);
+            // std::cout << "\nSelected : " << sCups.substr(pos,1);
             /*
             3) The crab places the cups it just picked up so that they are immediately clockwise of the destination cup. They keep the same order as when they were picked up.
             */
             sCups.insert(pos+1, sPicked);
-            std::cout << "\npicked reinserted : " << sCups;
+            // std::cout << "\npicked reinserted : " << sCups;
             /*
             4) The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
             */
             std::rotate(sCups.begin(), sCups.begin()+1,sCups.end());
-            std::cout << "\nCups for next round : " << sCups;
+            // std::cout << "\nCups for next round : " << sCups;
         }
         return *this;
     }
@@ -140,10 +144,11 @@ public:
         cups.splice(cups.end(),cups,cups.begin());
     }
     Part2CrabCups& operator+=(int const MOVES) {
-        const int PROGRESS_STEP{100};
+        const int PROGRESS_STEP{100000};
         int progress_count{PROGRESS_STEP};
+        std::cout << "\n";
         for (int i = 0; i<MOVES; ++i) {
-            if (progress_count++%PROGRESS_STEP==0) std::cout << "\n" << MOVES-i << std::flush;
+            if (progress_count++%PROGRESS_STEP==0) std::cout << '.' << std::flush;
             this->pick_cups();
             this->select_next();
             this->place_picked();
@@ -166,18 +171,21 @@ private:
 using Result = size_t;
 
 int main(int argc, const char * argv[]) {
+    Part1CrabCups crabs1{pExample2};
+    crabs1 += 100;
+    std::cout << "\nPart 1: " << crabs1.cups_after_1();
     // Part2CrabCups<9> crabs{pExample2}; // Part 1 example
     // crabs+=10;
     // Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
     // crabs+=100;
     // Part2CrabCups<100> crabs{pPuzzleInput}; // Investigate
-    // Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
-    // crabs += 10000000;
-    Part2CrabCups<1000000> crabs{pPuzzleInput}; // part 2
-    crabs += 10000000;
-    auto [second,third] = crabs.second_and_third();
+    // Part2CrabCups<1000000> crabs2{pExample2}; // Test part 2
+    // crabs2 += 10000000;
+    Part2CrabCups<1000000> crabs2{pPuzzleInput}; // part 2
+    crabs2 += 10000000;
+    auto [second,third] = crabs2.second_and_third();
     Result result = static_cast<Result>(second) * static_cast<Result>(third);
-    std::cout << "\nAnswer is : " << second << " * " << third << " = " << result;
+    std::cout << "\nPart 2: " << second << " * " << third << " = " << result;
     std::cout << "\n\n";
     return 0;
 }
