@@ -124,4 +124,14 @@ Cups  46 47 48 49 50 51 52 53 54 55 56 57 58 59 999998 999999 1000000 8 9 11 12 
     * We get these groupings clockwise of current:  ... 11 12 13    15 16 17    19 20 21    23 24 25 ...
     * With the intermediate (missing) cups "left behind" as 10 14 18 22 26 30 34...
 
-* Note to self: I seem to be keen on "trying something new" before "trying the old"? 
+* Note to self: I seem to be keen on "trying something new" before "trying the old"?
+
+* I then fell into the trap of std::ranges::iota_view taking a range [begin,end[ and NOT {first,count}.
+    * For some time I also fell into the trap of thinking of 1..9 as being 10 elements *sigh*
+    * I also almost fell into the trap of NOT setting the Id of the last cup to 1 million (again the cup numbers start at 1, not 0).
+* Here is the correct generation of 
+    * Note: It is not clear if using ranges for this is more readable (especially as the view range requires a static_cast to get both boundaries to be of the same type)
+```
+    // fill up the range 10...1000000 (part 2, no effect for part 1 cups count)
+    std::ranges::copy(std::ranges::iota_view{cups.size()+1,static_cast<size_t>(MAX+1)},std::back_inserter(cups));
+```

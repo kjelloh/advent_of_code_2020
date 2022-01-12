@@ -11,6 +11,8 @@
 #include <vector>
 #include <utility>
 #include <list>
+#include <ranges>
+#include <sstream>
 
 char const* pExample1 = R"(32415)";
 char const* pExample2 = R"(389125467)";
@@ -70,16 +72,18 @@ public:
     using Cups = std::list<Id>;
     const Id MAX{N};
     Part2CrabCups(std::string const& init_cups) {
-        for (char ch : init_cups) this->cups.push_back(static_cast<Id>(ch-'0'));
-        unplayed.first = 10;
-        unplayed.second = MAX;
-        expansion_point = cups.end();
-        for (int i=0;i<50;i++) this->expand_with_unplayed_lower();
-        for (int i=0;i<3;i++) this->expand_with_unplayed_upper();
+        auto digit_to_int = [](char digit){return digit-'0';};
+        std::ranges::transform(init_cups,std::back_inserter(cups),digit_to_int);
+        // fill up the range 10...1000000 (part 2, no effect for part 1 cups count)
+        std::ranges::copy(std::ranges::iota_view{cups.size()+1,static_cast<size_t>(MAX+1)},std::back_inserter(cups));
     }
     void print(std::string const& caption,Cups const& cups) const {
         std::cout << caption;
-        for (Id const& id : cups) std::cout << " " << id << std::flush;
+        auto take_front = std::min(cups.size(),static_cast<size_t>(15));
+        auto take_back = std::min(std::max(size_t{0},cups.size()-take_front),static_cast<size_t>(15));
+        std::ranges::copy(cups | std::views::take(take_front) ,std::ostream_iterator<int>(std::cout, " "));        
+        if (take_back>0) std::cout << "...";
+        std::ranges::copy(cups | std::views::reverse | std::views::take(take_back) | std::views::reverse ,std::ostream_iterator<int>(std::cout, " "));
     }
     void print() const {
         this->print("\nCups ",cups);   
@@ -89,34 +93,12 @@ public:
         std::advance(iter,count);
         return iter;
     }
-    void expand_with_unplayed_lower() {
-        // [ cups       ]      ... not in cups            [ cups ]
-        //            expand --> 
-        // current c c c [unplayed.first..unplayed.second] c c c  |
-        //    |                                            |     end
-        //  begin                                     expansion_point         
-        cups.insert(expansion_point,unplayed.first);
-        ++unplayed.first;
-    }
-    void expand_with_unplayed_upper() {
-        // [ cups       ]      ... not in cups            [ cups ]
-        //                                          <-- expand
-        // current c c c [unplayed.first..unplayed.second] c c c  |
-        //    |                                            |     end
-        //  begin                                     expansion_point         
-        expansion_point = cups.insert(expansion_point,unplayed.second);
-        --unplayed.second;
-    }
     void pick_cups() {
         /*
         1) The crab picks up the three cups that are immediately clockwise of the current cup. They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
         */
-       // Handle to-pick is in unplayed range
-        if (advanced(cups.begin(),1)==this->expansion_point) {
-            for (int i=0;i<3;i++) this->expand_with_unplayed_lower();
-        }
-        // splice: unlink from cups the range begin+1..begin+4, and link them before picked.end()
-        cups.splice(picked.end(),cups,advanced(cups.begin(),1),advanced(cups.begin(),4));
+        // splice: unlink from cups the range begin+1..begin+4, and link them into picked before picked.end()
+        picked.splice(picked.end(),cups,advanced(cups.begin(),1),advanced(cups.begin(),4));
         print("\nPicked ",picked);
         print("\nRemaining ",cups);       
     }
@@ -130,8 +112,6 @@ public:
             if (next <= 0) 
                 next = MAX;
         }
-        // handle selected is in unplayed range
-        if (next==unplayed.second) expand_with_unplayed_upper();
         this->selected = std::find(cups.begin(),cups.end(),next);
         std::cout << "\nSelected : " << *selected << std::flush;
     }
@@ -153,8 +133,6 @@ public:
         // 2. links unlinked element before cups.end()
         // = Ineffect the list is rotated left without violating any interator (e.g., insertion_point) having the value cups.begin()
         cups.splice(cups.end(),cups,cups.begin());
-        // handle next is in unplayed range
-        if (cups.begin()==this->expansion_point) this->expand_with_unplayed_lower();
     }
     Part2CrabCups& operator+=(int const MOVES) {
         const int PROGRESS_STEP{100000};
@@ -186,34 +164,17 @@ private:
     Cups cups{};
     Cups picked{};
     Cups::iterator selected{};
-    Cups::iterator expansion_point{};
-    std::pair<Id,Id> unplayed{};
-    /*
-    Model:  We keep a list of only cups "in play".
-
-            [ cups       ]      ... not in cups            [ cups ]
-            current c c c [unplayed.first..unplayed.second] c c c  |
-               |                                           |     end
-             begin                                     expansion_point 
-
-    So the list of cups only contains cups with numbers:
-        a) up to unplayed-first-1
-        b) from unplayed.second+1 up to MAX
-
-    And expansion_point refers to the node in the list before which unplayed cups shall be inserted when they come into play
-
-    */
 };
 
 
 int main(int argc, const char * argv[]) {
-    // Part2CrabCups<9> crabs{pExample2}; // Part 1 example
-    // crabs+=10;
+    Part2CrabCups<9> crabs{pExample2}; // Part 1 example
+    crabs+=10;
     // Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
     // crabs+=100;
     // Part2CrabCups<100> crabs{pPuzzleInput}; // Investigate
-    Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
-    crabs += 10000000;
+    // Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
+    // crabs += 10000000;
     auto cups = crabs.cups_from_1();
     crabs.print();
     auto second = cups.begin();std::advance(second,1);
