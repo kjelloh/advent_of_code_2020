@@ -71,6 +71,11 @@ public:
     const Id MAX{N};
     Part2CrabCups(std::string const& init_cups) {
         for (char ch : init_cups) this->cups.push_back(static_cast<Id>(ch-'0'));
+        unplayed.first = 10;
+        unplayed.second = MAX;
+        expansion_point = cups.end();
+        this->expand_with_unplayed_lower();
+        this->expand_with_unplayed_upper();
     }
     void print(std::string const& caption,Cups const& cups) const {
         std::cout << caption;
@@ -79,53 +84,92 @@ public:
     void print() const {
         this->print("\nCups ",cups);   
     }
+    template <typename It>
+    Cups::iterator advanced(It iter,int count) {
+        std::advance(iter,count);
+        return iter;
+    }
+    void expand_with_unplayed_lower() {
+        // [ cups       ]      ... not in cups            [ cups ]
+        //            expand --> 
+        // current c c c [unplayed.first..unplayed.second] c c c  |
+        //    |                                            |     end
+        //  begin                                     expansion_point         
+        cups.insert(expansion_point,unplayed.first);
+        ++unplayed.first;
+    }
+    void expand_with_unplayed_upper() {
+        // [ cups       ]      ... not in cups            [ cups ]
+        //                                          <-- expand
+        // current c c c [unplayed.first..unplayed.second] c c c  |
+        //    |                                            |     end
+        //  begin                                     expansion_point         
+        expansion_point = cups.insert(expansion_point,unplayed.second);
+        --unplayed.second;
+    }
+    void pick_cups() {
+        /*
+        1) The crab picks up the three cups that are immediately clockwise of the current cup. They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
+        */
+       // Handle to-pick is in unplayed range
+        if (advanced(cups.begin(),1)==this->expansion_point) {
+            for (int i=0;i<3;i++) this->expand_with_unplayed_lower();
+        }
+        // splice: unlink from cups the range begin+1..begin+4, and link them before picked.end()
+        cups.splice(picked.end(),cups,advanced(cups.begin(),1),advanced(cups.begin(),4));
+        print("\nPicked ",picked);
+        print("\nRemaining ",cups);       
+    }
+    void select_next() {
+        /*
+        2) The crab selects a destination cup: the cup with a label equal to the current cup's label minus one. If this would select one of the cups that was just picked up, the crab will keep subtracting one until it finds a cup that wasn't just picked up. If at any point in this process the value goes below the lowest value on any cup's label, it wraps around to the highest value on any cup's label instead.
+        */
+        auto next = (cups.front()>1)?cups.front()-1:MAX;
+        while (std::find(picked.begin(),picked.end(),next)!=picked.end()) {
+            --next;
+            if (next <= 0) 
+                next = MAX;
+        }
+        // handle selected is in unplayed range
+        if (next==unplayed.second) expand_with_unplayed_upper();
+        this->selected = std::find(cups.begin(),cups.end(),next);
+        std::cout << "\nSelected : " << *selected << std::flush;
+    }
+    void place_picked() {
+        /*
+        3) The crab places the cups it just picked up so that they are immediately clockwise of the destination cup. They keep the same order as when they were picked up.
+        */
+        cups.splice(advanced(selected,1),picked,picked.begin(),picked.end());
+        print("\npicked reinserted ",cups);
+    }
+    void make_next_current() {
+        /*
+        4) The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
+        */
+        // splice from cups.begin() to cups.end()
+        // splice unlinks elements from source list and links them into target list
+        // This works also when source and target is the same list. 
+        // 1. unlinks cups.begin() from cups
+        // 2. links unlinked element before cups.end()
+        // = Ineffect the list is rotated left without violating any interator (e.g., insertion_point) having the value cups.begin()
+        cups.splice(cups.end(),cups,cups.begin());
+        // handle next is in unplayed range
+        if (cups.begin()==this->expansion_point) this->expand_with_unplayed_lower();
+    }
     Part2CrabCups& operator+=(int const MOVES) {
         const int PROGRESS_STEP{100000};
         int progress_count{PROGRESS_STEP};
-        Id event_horizon{MAX};
         for (int i = 0; i<MOVES; ++i) {
             if (progress_count++%PROGRESS_STEP==0) std::cout << "\n" << cups.size() << " " << MOVES-i;
-            // print();
-            /*
-            1) The crab picks up the three cups that are immediately clockwise of the current cup. They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
-            */
-            std::pair<Cups::iterator,Cups::iterator> picked_range{cups.begin(),cups.begin()};
-            std::advance(picked_range.first,1);
-            std::advance(picked_range.second,4);
-            
-            Cups picked{picked_range.first,picked_range.second};
-            cups.erase(picked_range.first,picked_range.second);
-            // print("\nPicked ",picked);
-            // print("\nRemaining ",cups);
-            /*
-            2) The crab selects a destination cup: the cup with a label equal to the current cup's label minus one. If this would select one of the cups that was just picked up, the crab will keep subtracting one until it finds a cup that wasn't just picked up. If at any point in this process the value goes below the lowest value on any cup's label, it wraps around to the highest value on any cup's label instead.
-            */
-            auto next = (cups.front()>1)?cups.front()-1:MAX;
-            while (std::find(picked.begin(),picked.end(),next)!=picked.end()) {
-                --next;
-                if (next <= 0) 
-                    next = MAX;
-            }
-            // Expand cups with next if it is not yet in there
-            auto selected=cups.begin();
-            if (next>9 and next==event_horizon) {
-                cups.push_back(next);
-                --event_horizon;
-                selected = cups.end();--selected;
-            }
-            else selected = std::find(cups.begin(),cups.end(),next);
-
-            // std::cout << "\nSelected : " << *selected << std::flush;
-            /*
-            3) The crab places the cups it just picked up so that they are immediately clockwise of the destination cup. They keep the same order as when they were picked up.
-            */
-            cups.insert(++selected,picked.begin(),picked.end());
-            // print("\npicked reinserted ",cups);
-            /*
-            4) The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
-            */
-            cups.push_back(cups.front());
-            cups.pop_front();
+            print();
+            std::cin.get();
+            this->pick_cups();
+            std::cin.get();
+            this->select_next();
+            std::cin.get();
+            this->place_picked();
+            std::cin.get();
+            this->make_next_current();
         }
         return *this;
     }
@@ -138,7 +182,27 @@ public:
         return result;
     }
 private:
+    // Game state
     Cups cups{};
+    Cups picked{};
+    Cups::iterator selected{};
+    Cups::iterator expansion_point{};
+    std::pair<Id,Id> unplayed{};
+    /*
+    Model:  We keep a list of only cups "in play".
+
+            [ cups       ]      ... not in cups            [ cups ]
+            current c c c [unplayed.first..unplayed.second] c c c  |
+               |                                           |     end
+             begin                                     expansion_point 
+
+    So the list of cups only contains cups with numbers:
+        a) up to unplayed-first-1
+        b) from unplayed.second+1 up to MAX
+
+    And expansion_point refers to the node in the list before which unplayed cups shall be inserted when they come into play
+
+    */
 };
 
 
