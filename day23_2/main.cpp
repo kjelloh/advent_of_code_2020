@@ -140,13 +140,9 @@ public:
         for (int i = 0; i<MOVES; ++i) {
             if (progress_count++%PROGRESS_STEP==0) std::cout << "\n" << cups.size() << " " << MOVES-i;
             print();
-            std::cin.get();
             this->pick_cups();
-            std::cin.get();
             this->select_next();
-            std::cin.get();
             this->place_picked();
-            std::cin.get();
             this->make_next_current();
         }
         return *this;
@@ -168,10 +164,10 @@ private:
 
 
 int main(int argc, const char * argv[]) {
-    Part2CrabCups<9> crabs{pExample2}; // Part 1 example
-    crabs+=10;
-    // Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
-    // crabs+=100;
+    // Part2CrabCups<9> crabs{pExample2}; // Part 1 example
+    // crabs+=10;
+    Part2CrabCups<9> crabs{pPuzzleInput}; // Part 1
+    crabs+=100;
     // Part2CrabCups<100> crabs{pPuzzleInput}; // Investigate
     // Part2CrabCups<1000000> crabs{pExample2}; // Test part 2
     // crabs += 10000000;
